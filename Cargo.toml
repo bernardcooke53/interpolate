@@ -1,0 +1,11 @@
+[package]
+name = "interpolation"
+version = "0.1.0"
+edition = "2021"
+author = "Bernard Cooke"
+
+[dependencies]
+csv = "1.1"
+linked_hash_set = "0.1.4"
+ndarray = "0.15.4"
+ndarray-csv = "0.5.1"
