@@ -82,6 +82,7 @@ dependencies = [
  "ndarray",
  "ndarray-csv",
  "pretty_assertions",
+ "serde",
 ]
 
 [[package]]

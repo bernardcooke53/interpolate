@@ -16,6 +16,9 @@ pub enum VectorDirection {
     Right,
 }
 
+/// Given a `Vec<&Option<f64>>`, walk along it and return Some with
+/// reference to the first non-None element of vec, or None if all
+/// elements are None
 pub fn walk<'a>(
     vec: Vec<&'a Option<f64>>,
     vec_direc: VectorDirection,
@@ -24,18 +27,16 @@ pub fn walk<'a>(
 ) -> Option<&'a f64> {
     let (start_row, start_col) = start;
     let make_nan_search_index = |k| match vec_direc {
-        VectorDirection::Left => dbg!((start_row, start_col - k)),
-        VectorDirection::Down => dbg!((start_row + k, start_col)),
-        VectorDirection::Up => dbg!((start_row - k, start_col)),
-        VectorDirection::Right => dbg!((start_row, start_col + k)),
+        VectorDirection::Left => (start_row, start_col - k),
+        VectorDirection::Down => (start_row + k, start_col),
+        VectorDirection::Up => (start_row - k, start_col),
+        VectorDirection::Right => (start_row, start_col + k),
     };
 
     let break_condition = |&(index, val): &(usize, &Option<f64>)| {
         let search_idx = make_nan_search_index(index);
-        dbg!(&val);
-        dbg!(&search_idx);
 
-        if !dbg!(nones.contains(&search_idx)) {
+        if !nones.contains(&search_idx) {
             match val {
                 Some(_) => return true,
                 None => return false,

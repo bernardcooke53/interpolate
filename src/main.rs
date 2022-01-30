@@ -21,10 +21,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     let source_array = array::parse_csv_to_array(filename, &none_encoding);
-    let nones = array::find_nones(&source_array);
-    println!("Source Array: {:?}", source_array);
-    println!("\n");
-    println!("Nones: {:?}", nones);
+    let nones = array::find_nones_in_array(&source_array);
     let target_array = array::repair_array_inplace(nones, source_array);
     array::write_array_to_csv(&target_array, &output_filename)
 }

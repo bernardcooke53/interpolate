@@ -3,11 +3,17 @@ use csv;
 use linked_hash_set::LinkedHashSet;
 use ndarray::prelude::*;
 use ndarray_csv::{Array2Reader, Array2Writer};
+use serde::ser::Serialize;
 use std::error::Error;
 use std::fmt::Debug;
 use std::fs::File;
 use std::str::FromStr;
 
+/// Parse elements of a CSV file to an array
+///
+/// Elements can be parsed from String to the
+/// desired type, and any elements matching `none_encoding`
+/// will be filled in as `None`
 pub fn parse_csv_to_array<T: 'static>(
     filename: &String,
     none_encoding: &String,
@@ -30,8 +36,11 @@ where
     })
 }
 
-pub fn write_array_to_csv(
-    array: &Array2<Option<f64>>,
+/// Write an array to a CSV file
+///
+/// The array element type must implement `serde::ser::Serialize`
+pub fn write_array_to_csv<T: Serialize>(
+    array: &Array2<T>,
     output_filename: &String,
 ) -> Result<(), Box<dyn Error>> {
     let file = File::create(output_filename)?;
@@ -41,7 +50,8 @@ pub fn write_array_to_csv(
     Ok(writer.serialize_array2(array)?)
 }
 
-pub fn find_nones(arr: &Array2<Option<f64>>) -> LinkedHashSet<(usize, usize)> {
+/// Find None values in Array
+pub fn find_nones_in_array(arr: &Array2<Option<f64>>) -> LinkedHashSet<(usize, usize)> {
     let mut nones: LinkedHashSet<(usize, usize)> = LinkedHashSet::new();
     'a: for ((i, j), val) in arr.indexed_iter() {
         match val {
@@ -56,6 +66,8 @@ pub fn find_nones(arr: &Array2<Option<f64>>) -> LinkedHashSet<(usize, usize)> {
     nones
 }
 
+/// Parse a String value to the desired type, filling
+/// values matching `none_encoding` with `None`
 fn parse_none_encoding<T>(
     from: &String,
     none_encoding: &String,
@@ -74,6 +86,8 @@ where
     }
 }
 
+/// Repair an array using the interpolate algorithm
+/// in interpolate::algorithm in-place.
 pub fn repair_array_inplace(
     mut nones: LinkedHashSet<(usize, usize)>,
     mut array: Array2<Option<f64>>,
@@ -87,7 +101,6 @@ pub fn repair_array_inplace(
         // for (rownum, colnum) in nones.iter().cloned().to_owned() {
 
         let (rownum, colnum) = nones.iter().next().cloned().unwrap();
-        dbg!(&(rownum, colnum));
         // Remove this from nones so we know what's already been calculated
         nones.remove(&(rownum, colnum));
         // Note if we're walking left or up we want to start closest to our current value -
@@ -115,51 +128,18 @@ pub fn repair_array_inplace(
             .into_iter()
             .collect::<Vec<_>>();
 
-        let left = dbg!(walk(
-            left_sl,
-            VectorDirection::Left,
-            (rownum, colnum),
-            &nones
-        ));
-        let down = dbg!(walk(
-            down_sl,
-            VectorDirection::Down,
-            (rownum, colnum),
-            &nones
-        ));
-        let up = dbg!(walk(up_sl, VectorDirection::Up, (rownum, colnum), &nones));
-        let right = dbg!(walk(
-            right_sl,
-            VectorDirection::Right,
-            (rownum, colnum),
-            &nones
-        ));
-        let present: Vec<&f64> = dbg!(vec![up, down, left, right].into_iter().flatten().collect());
+        let left = walk(left_sl, VectorDirection::Left, (rownum, colnum), &nones);
+        let down = walk(down_sl, VectorDirection::Down, (rownum, colnum), &nones);
+        let up = walk(up_sl, VectorDirection::Up, (rownum, colnum), &nones);
+        let right = walk(right_sl, VectorDirection::Right, (rownum, colnum), &nones);
+        let present: Vec<&f64> = vec![up, down, left, right].into_iter().flatten().collect();
 
-        let new_value = dbg!(vec_average(present));
+        let new_value = vec_average(present);
         let rounded = ((new_value * 1_000_000_f64).round() / 1_000_000_f64) as f64;
-        println!(
-            "Point ({}, {}) --- Up: {} Down: {}, Left: {}, Right: {}, New Value: {}",
-            rownum.to_string(),
-            colnum.to_string(),
-            up.map(|c| c.to_string())
-                .unwrap_or(String::from("<Out of bounds>")),
-            down.map(|c| c.to_string())
-                .unwrap_or(String::from("<Out of bounds>")),
-            left.map(|c| c.to_string())
-                .unwrap_or(String::from("<Out of bounds>")),
-            right
-                .map(|c| c.to_string())
-                .unwrap_or(String::from("<Out of bounds>")),
-            new_value.to_string(),
-        );
 
         // Value found, time to write it in
         array[[rownum, colnum]] = Some(rounded);
     }
-
-    println!("Repaired array:");
-    println!("{:?}", array);
     array
 }
 
