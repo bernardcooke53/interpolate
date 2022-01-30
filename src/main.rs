@@ -1,9 +1,8 @@
-// Interpolation command-line utility
-//
-// Given an input 2D matrix with missing values encoded as "nan",
-// output a 2D matrix with missing values interpolated from surrounding
-// non-empty values
-
+/// Interpolation command-line utility
+///
+/// Given an input 2D matrix with missing values encoded as "nan",
+/// output a 2D matrix with missing values interpolated from surrounding
+/// non-empty values
 // Use LinkedHashSet over HashSet to preserve insertion order,
 // meaning we start interpolating from top-left-most nan of matrix
 mod algorithm;
