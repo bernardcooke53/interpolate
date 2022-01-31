@@ -27,6 +27,10 @@ used as follows:
 
 A new CSV file with the repaired matrix will be created *in the same directory* as your input file.
 
+Tests can be run via
+```
+cargo test
+```
 
 ## Brief
 
@@ -135,7 +139,7 @@ After filling the first row of this matrix, it now looks like
 When we continue to the second row, we fill position (1, 0) with (1+7+4)/3 = 4,
 as normal. However, when we fill position (1, 1), we *use* the value in position (1, 0)
 as the first non-None value to the left - meaning we fill (1, 1) with the caluclation
-(4+4+4+4)/4 = 4. This is how the algorithm approaches adjacent None values.
+(4+4+4+2.333333)/4 = 3.583333. This is how the algorithm approaches adjacent None values.
 
 Finishing out the algorithm in this way produces the following matrix:
 
